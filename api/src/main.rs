@@ -33,5 +33,5 @@ async fn main()->Result<(),std::io::Error> {
     
     .data(arc_conn.clone());
 
-    Server::new(TcpListener::bind("0.0.0.0:3000")).name("hello-world").run(app).await
+    Server::new(TcpListener::bind("0.0.0.0:3000")).name("betteruptime").run(app).await
 }
