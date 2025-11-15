@@ -5,6 +5,6 @@ edition = "2024"
 
 [dependencies]
 redis-stream = "0.1.2"
-redis = { version = "0.19.0", features = ["tls","streams"] }
+redis = { version = "0.20.2", features = ["tls","streams"] }
 tokio = {version = "1.48.0" , features = ["full"]}
 serde_json = "1.0"
