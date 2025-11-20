@@ -34,7 +34,7 @@ impl RedisStream {
             "website": website
         }).to_string();
 
-        let res :RedisResult<()> = self.conn.xadd("betteruptime:website", "*", &[("payload",payload)]);
+        let _ :RedisResult<()> = self.conn.xadd("betteruptime:website", "*", &[("payload",payload)]);
 
         Ok(())
     }

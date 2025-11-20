@@ -1,24 +1,63 @@
-use poem::{Error, FromRequest, Request, http::StatusCode};
-pub struct UserId(pub String);
+use poem::{
+    Endpoint, Middleware, Request, Result, Error,
+    http::StatusCode,
+};
+
 use crate::extra::jwt::Claims;
 
-impl<'a> FromRequest<'a> for UserId{
-    async fn from_request(
-        req: &'a Request,
-        body: &mut RequestBody,
-    ) -> Request<Self>{
-        let header = req.headers().get("authorization").and_then(|value|value.to_str().ok()).ok_or_else(err|| Error::from_string("missing token", StatusCode::UNAUTHORIZED))?;
-        
-        let user_id = Claims::decode_token(&header);
+pub struct TokenMiddleware;
 
-        match user_id{
-            Ok(claims)=>{
-                Ok(claims.sub)
-            }
-            Err(_)=>{
-                Err(Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))
-            }
-        }
+impl<E: Endpoint> Middleware<E> for TokenMiddleware {
+    type Output = TokenMiddlewareImpl<E>;
 
+    fn transform(&self, ep: E) -> Self::Output {
+        TokenMiddlewareImpl { ep }
+    }
+}
+
+pub struct TokenMiddlewareImpl<E> {
+    ep: E,
+}
+
+#[derive(Clone)]
+pub struct Token {
+    pub user_id: String,
+}
+
+impl<E: Endpoint> Endpoint for TokenMiddlewareImpl<E> {
+    type Output = E::Output;
+
+    async fn call(&self, mut req: Request) -> Result<Self::Output> {
+        // Extract header
+        let auth_header = match req.header("Authorization") {
+            Some(h) => h,
+            None => {
+                return Err(Error::from_status(StatusCode::UNAUTHORIZED));
+            }
+        };
+
+        // Must be "Bearer <token>"
+        let token = match auth_header.strip_prefix("Bearer ") {
+            Some(t) => t,
+            None => {
+                return Err(Error::from_status(StatusCode::UNAUTHORIZED));
+            }
+        };
+
+        // Decode JWT
+        let decoded = match Claims::decode_token(token.to_string()) {
+            Ok(c) => c,
+            Err(_) => {
+                return Err(Error::from_status(StatusCode::UNAUTHORIZED));
+            }
+        };
+
+        // Insert user_id into request
+        req.extensions_mut().insert(Token {
+            user_id: decoded.sub,
+        });
+
+        // Call next endpoint
+        self.ep.call(req).await
     }
 }

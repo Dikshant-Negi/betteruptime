@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 
 pub struct Store{
-    pub conn : PgPool
+    pub conn : PgPool,
 }
 
 impl Store{

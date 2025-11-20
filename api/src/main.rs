@@ -1,13 +1,14 @@
 
-use poem::{listener::TcpListener, post, Route, Server,EndpointExt};
+use poem::{EndpointExt, Route, Server, listener::TcpListener, post};
 use store::Store;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use crate::controllers::{user,website};
-
+use redis_stream::redis_client::RedisStream;
+use crate::extra::auth_middleware::TokenMiddleware;
+use crate::extra::app_state::AppState;
 pub mod extra;
 pub mod controllers;
-
 
 
 
@@ -15,23 +16,25 @@ pub mod controllers;
 async fn main()->Result<(),std::io::Error> {
     dotenvy::dotenv().ok();
     let mut db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-    let conn = Store::new(&mut db_url).await;
-    let conn = match conn{
-        Ok(c)=>{
-            c
-        }
+    let mut redis_url = std::env::var("REDIS_URL").expect("REDIS_URL");
+    let db =match Store::new(&mut db_url).await{
+        Ok(store)=>Arc::new(Mutex::new(store)),
         Err(e)=>{
-            panic!("DB Connection Error: {}",e);
+            panic!("Failed to connect to database: {}",e);
         }
     };
-    let arc_conn = Arc::new(Mutex::new(conn));
-
+    let redis =match RedisStream::new(&mut redis_url){
+        Ok(client)=>Arc::new(Mutex::new(client)),
+        Err(e)=>{
+            panic!("Failed to connect to redis: {}",e);
+        }
+    };
+    let state = Arc::new(Mutex::new(AppState { db, redis }));
     let app = Route::new()
     .at("/createuser",post(user::create_user))
     .at("/signin",post(user::sigin))
-    .at("/createwebsite",post(website::create_website))
-    
-    .data(arc_conn.clone());
+    .at("/createwebsite",post(website::create_website)).with(TokenMiddleware)
+    .data(state.clone());
 
     Server::new(TcpListener::bind("0.0.0.0:3000")).name("betteruptime").run(app).await
 }

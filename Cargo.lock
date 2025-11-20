@@ -40,7 +40,9 @@ dependencies = [
  "dotenvy",
  "jsonwebtoken",
  "poem",
+ "redis_stream",
  "serde",
+ "serde_json",
  "store",
  "tokio",
 ]
@@ -1565,6 +1567,7 @@ dependencies = [
  "redis",
  "redis-stream",
  "serde_json",
+ "store",
  "tokio",
 ]
 

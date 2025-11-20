@@ -1,24 +1,22 @@
 use poem::{handler, http::StatusCode, web::{Data, Json},Error};
-use store::Store;
-
+use crate::extra::app_state::AppState;
 use std::{ sync::Arc};
 use tokio::sync::Mutex;
-use jwt::Claims;
-use crate::extra::{jwt::Claims, user_response,auth_middleware::UserId};
+use crate::extra::jwt::Claims;
+use crate::extra::{user_response};
 
 
 //add jwt auth
 #[handler]
-pub async fn  create_user(Json(body):Json<user_response::CreateUserInput>,data:Data<&Arc<Mutex<Store>>>)->Result<Json<user_response::CreateUserOuptput>,Error>{
+pub async fn  create_user(Json(body):Json<user_response::CreateUserInput>,data:Data<&Arc<Mutex<AppState>>>)->Result<Json<user_response::CreateUserOuptput>,Error>{
     if body.username.is_empty() || body.email.is_empty() || body.password.is_empty(){
         return Err(Error::from_status(StatusCode::BAD_REQUEST));
-    }
+    } 
+    let state = data.lock().await;
+    let mut db = state.db.lock().await;
 
-    let token = Claims::create_token(user_id);  
-    let mut lock = data.lock().await;
 
-
-    let res = lock.create_user(body.email,body.password,body.username).await;
+    let res = db.conn.create_user(body.email,body.password,body.username).await;
 
     match res{
         Ok(_)=>{
@@ -31,12 +29,12 @@ pub async fn  create_user(Json(body):Json<user_response::CreateUserInput>,data:D
 }
 
 #[handler]
-pub async fn sigin(Json(body):Json<user_response::SignInput>,data:Data<&Arc<Mutex<Store>>>,UserId(user_id):UserId)->Result<Json<user_response::CreateUserOuptput>,Error>{
+pub async fn sigin(Json(body):Json<user_response::SignInput>,data:Data<&Arc<Mutex<AppState>>>,UserId(user_id):UserId)->Result<Json<user_response::CreateUserOuptput>,Error>{
      if  body.email.is_empty() || body.password.is_empty(){
         return Err(Error::from_status(StatusCode::BAD_REQUEST))
     }
     let mut lock = data.lock().await;
-    let res  = lock.sigin(body.email,body.password).await;
+    let res  = lock.db.sigin(body.email,body.password).await;
 
     match res{
         Ok(_)=>{
