@@ -14,13 +14,19 @@ pub async fn  create_user(Json(body):Json<user_response::CreateUserInput>,data:D
     } 
     let state = data.lock().await;
     let mut db = state.db.lock().await;
-
-
-    let res = db.conn.create_user(body.email,body.password,body.username).await;
+    let res = db.create_user(body.email,body.password,body.username).await;
 
     match res{
-        Ok(_)=>{
-           Ok( Json(user_response::CreateUserOuptput { success: (true), jwt: token , message:  String::from("User created successfully") }))
+        Ok(id)=>{
+            let token = Claims::create_token(id);
+            match token {
+                Ok(t) => {
+                    return Ok( Json(user_response::CreateUserOuptput { success: (true), jwt: t , message:  String::from("User created successfully") }))
+                }
+                Err(_) => {
+                    return Err(Error::from_status(StatusCode::INTERNAL_SERVER_ERROR));
+                }
+            }
         }
         Err(_)=>{
            Err(Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))
@@ -29,20 +35,25 @@ pub async fn  create_user(Json(body):Json<user_response::CreateUserInput>,data:D
 }
 
 #[handler]
-pub async fn sigin(Json(body):Json<user_response::SignInput>,data:Data<&Arc<Mutex<AppState>>>,UserId(user_id):UserId)->Result<Json<user_response::CreateUserOuptput>,Error>{
+pub async fn sigin(Json(body):Json<user_response::SignInput>,data:Data<&Arc<Mutex<AppState>>>)->Result<Json<user_response::CreateUserOuptput>,Error>{
      if  body.email.is_empty() || body.password.is_empty(){
         return Err(Error::from_status(StatusCode::BAD_REQUEST))
     }
     let mut lock = data.lock().await;
-    let res  = lock.db.sigin(body.email,body.password).await;
+    let mut db =lock.db.lock().await;
+    let res  = db.sigin(body.email,body.password).await;
 
     match res{
-        Ok(_)=>{
-           Ok( Json(user_response::CreateUserOuptput{
-                success:true,
-                jwt:String::from("123456"),
-                message:String::from("user signed in successfully")
-            }))
+        Ok(id)=>{
+            let token = Claims::create_token(id);
+            match token {
+                Ok(t) => {
+                    return Ok( Json(user_response::CreateUserOuptput { success: (true), jwt: t , message:  String::from("User signed in successfully") }))
+                }
+                Err(_) => {
+                    return Err(Error::from_status(StatusCode::INTERNAL_SERVER_ERROR));
+                }
+            }
         }
         Err(_)=>{
             Err(Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))

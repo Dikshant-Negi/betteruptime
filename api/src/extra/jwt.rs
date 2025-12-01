@@ -32,11 +32,9 @@ impl Claims {
     pub fn decode_token(token: String) -> Result<Claims, ErrorKind> {
         dotenvy::dotenv().ok();
         let secret = std::env::var("JWT_SECRET").unwrap();
-        let validate = Validation {
-            validate_exp: true,
-            algorithms: vec![Algorithm::HS256],
-            ..Validation::default()
-        };
+        let mut validate = Validation::new(Algorithm::HS256);
+        validate.validate_exp = true;   
+
         let decoded = decode::<Claims>(
             &token,
             &DecodingKey::from_secret(secret.as_ref()),
