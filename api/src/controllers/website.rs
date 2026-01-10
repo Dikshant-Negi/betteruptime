@@ -4,6 +4,7 @@ use crate::extra::app_state::AppState;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use crate::extra::auth_middleware::Token;
+use redis_stream::redis_client::RedisStream;
 
 #[handler]
 pub async fn create_website(Json(body):Json<WebsiteInput>,data:Data<&Arc<Mutex<AppState>>>,req:&Request)->Result<Json<WebsiteOutput>,Error>{
@@ -21,7 +22,7 @@ pub async fn create_website(Json(body):Json<WebsiteInput>,data:Data<&Arc<Mutex<A
 
     match res{
         Ok(_)=>{
-            
+            RedisStream::schedule_website(&mut self, id, website_url, interval_sec);
             Ok(Json(WebsiteOutput { success: (true), message: String::from("website inserted successfully") }))
 
         }

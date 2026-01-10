@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+reqwest = { version = "0.11", features = ["json"] }
 redis-stream = "0.1.2"
 redis = { version = "0.20.2", features = ["tls","streams"] }
 tokio = {version = "1.48.0" , features = ["full"]}

@@ -24,7 +24,18 @@ async fn main()->Result<(),std::io::Error> {
         }
     };
     let redis =match RedisStream::new(&mut redis_url){
-        Ok(client)=>Arc::new(Mutex::new(client)),
+        Ok(client)=>{
+            let consumer = client.add_consumer();
+            match consumer {
+                Ok(_)=>{
+                    println!("Redis consumer added successfully.");
+                },
+                Err(e)=>{
+                    panic!("Failed to add redis consumer: {}",e);   
+                }
+            }
+            Arc::new(Mutex::new(client))
+        },
         Err(e)=>{
             panic!("Failed to connect to redis: {}",e);
         }

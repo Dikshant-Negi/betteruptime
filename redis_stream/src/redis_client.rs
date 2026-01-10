@@ -5,6 +5,7 @@ use redis::{
 pub struct RedisStream {
     pub conn: Connection,
 }
+use reqwest;
 
 impl RedisStream {
     pub fn new(url: &str) -> RedisResult<Self> {
@@ -36,7 +37,8 @@ impl RedisStream {
         Ok(())
     }
 
-    pub fn process_due_websites(&mut self)->RedisResult<()>{
+    pub fn 
+    process_due_websites(&mut self)->RedisResult<()>{
         let now = Utc::now().timestamp();
         
         let due_websites: Vec<String> = self.conn.zrangebyscore(
@@ -51,6 +53,8 @@ impl RedisStream {
             let interval: u64 = self.conn.hget(&key, "interval")?;
 
             self.x_add(&website_id, &website_url)?;
+            
+            // removing the website from schedule and reschedule it with next timestamp
             self.conn.zrem("betteruptime:schedule", &website_id)?;
 
             let next_time = now + interval as i64;
@@ -98,5 +102,15 @@ impl RedisStream {
                 .xread_options(&["betteruptime:website"], &[">"], options)?;
 
         Ok(reply)
+    }
+
+    pub async  fn ping_websites(&mut self,website_url:&str,website_id:&str)->RedisResult<(bool)>{
+        let websites = self.x_read_group("betteruptime:website");
+        let response = reqwest::get(website_url).await?;
+
+        match response.status().is_success(){
+            true => Ok(true),
+            false => Ok(false),
+        }
     }
 }
