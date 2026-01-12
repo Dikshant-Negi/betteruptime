@@ -1,5 +1,6 @@
-use Redis::RedisResult;
+use redis::RedisResult;
 use redis_stream::redis_client::RedisStream;
+use tokio;
 
 pub fn insert_into_stream() -> RedisResult<()> {
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL");
@@ -21,10 +22,17 @@ pub fn insert_into_stream() -> RedisResult<()> {
 
             println!("Connection lost, reconnecting...");
             std::thread::sleep(std::time::Duration::from_secs(1));
+            Ok(())
         }
         Err(e) => {
             eprintln!("Failed to connect to Redis: {}", e);
             std::thread::sleep(std::time::Duration::from_secs(1));
+            Err(e)
         }
     }
+}
+
+#[tokio::main]
+async fn main() {
+    let _ = insert_into_stream();
 }

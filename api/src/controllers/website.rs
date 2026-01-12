@@ -18,11 +18,12 @@ pub async fn create_website(Json(body):Json<WebsiteInput>,data:Data<&Arc<Mutex<A
     };
     let mut lock = data.lock().await;
     let mut db = lock.db.lock().await;
+    let mut redis_client = lock.redis.lock().await;
     let res = db.create_websites(body.url,id.user_id.clone(),body.name,body.interval).await;
 
     match res{
-        Ok(_)=>{
-            RedisStream::schedule_website(&mut self, id, website_url, interval_sec);
+        Ok(r)=>{
+            let _ = RedisStream::schedule_website(&mut redis_client, &id.user_id, r.url.as_str(), r.check_interval );
             Ok(Json(WebsiteOutput { success: (true), message: String::from("website inserted successfully") }))
 
         }

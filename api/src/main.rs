@@ -24,7 +24,7 @@ async fn main()->Result<(),std::io::Error> {
         }
     };
     let redis =match RedisStream::new(&mut redis_url){
-        Ok(client)=>{
+        Ok(mut client)=>{
             let consumer = client.add_consumer();
             match consumer {
                 Ok(_)=>{

@@ -1,11 +1,11 @@
 use chrono::Utc;
 use redis::{
-    self, Commands, Connection, ErrorKind, RedisResult, streams::{StreamReadOptions, StreamReadReply}
+    self, Commands, Connection, RedisResult, streams::{StreamReadOptions, StreamReadReply}
 };
 pub struct RedisStream {
     pub conn: Connection,
 }
-use reqwest;
+
 
 impl RedisStream {
     pub fn new(url: &str) -> RedisResult<Self> {
@@ -19,18 +19,23 @@ impl RedisStream {
         &mut self,
         id: &str,
         website_url: &str,
-        interval_sec: u64,
+        interval_sec: Option<i32>,
     ) -> RedisResult<()> {
         let now = Utc::now().timestamp();
 
         let _:RedisResult<()> = self.conn.zadd("betteruptime:schedule", id, now);
         
         let key = format!("betteruptime:site:{}", id);
+        let interval = match interval_sec{
+            Some(i)=>i.to_string(),
+            None=>"60".to_string(),
+        };
         let _:RedisResult<()> = self.conn.hset_multiple(
             &key,
             &[
+                ("id",id),
                 ("url", website_url),
-                ("interval", interval_sec.to_string().as_str()),
+                ("interval",interval.as_str()),
             ],
         );
 
@@ -51,11 +56,11 @@ impl RedisStream {
             let key = format!("betteruptime:site:{}", website_id);
             let website_url: String = self.conn.hget(&key, "url")?;
             let interval: u64 = self.conn.hget(&key, "interval")?;
+            let id:String = self.conn.hget(&key,"id")?;
+            self.x_add(&id,&website_id, &website_url)?;
 
-            self.x_add(&website_id, &website_url)?;
-            
             // removing the website from schedule and reschedule it with next timestamp
-            self.conn.zrem("betteruptime:schedule", &website_id)?;
+            let _ :i64 = self.conn.zrem("betteruptime:schedule", &website_id)?;
 
             let next_time = now + interval as i64;
             let _:RedisResult<()> = self.conn.zadd("betteruptime:schedule", &website_id, next_time);
@@ -77,9 +82,10 @@ impl RedisStream {
         Ok(())
     }
 
-    pub fn x_add(&mut self, id: &str, website: &str) -> RedisResult<()> {
+    pub fn x_add(&mut self, id: &str, website_id:&str,website: &str) -> RedisResult<()> {
         let payload = serde_json::json!({
-            "id": id,
+            "id":id,
+            "website_id": website_id,
             "website": website
         })
         .to_string();
@@ -104,13 +110,5 @@ impl RedisStream {
         Ok(reply)
     }
 
-    pub async  fn ping_websites(&mut self,website_url:&str,website_id:&str)->RedisResult<(bool)>{
-        let websites = self.x_read_group("betteruptime:website");
-        let response = reqwest::get(website_url).await?;
 
-        match response.status().is_success(){
-            true => Ok(true),
-            false => Ok(false),
-        }
-    }
 }
