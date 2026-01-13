@@ -18,7 +18,7 @@ impl Claims {
             sub: user_id,
             exp: (Utc::now() + Duration::days(2)).timestamp() as usize,
         };
-        let secret = std::env::var("JWT_SECRET").map_err(|_| ErrorKind::InvalidKeyFormat)?;
+        let secret = std::env::var("CLIENT_SECRET").map_err(|_| ErrorKind::InvalidKeyFormat)?;
         let token = encode(
             &Header::default(),
             &claims,
@@ -26,6 +26,7 @@ impl Claims {
         )
         .map_err(|_| ErrorKind::InvalidKeyFormat)?;
 
+        println!("token {} : {}",token,secret);
         Ok(token)
     }
 
