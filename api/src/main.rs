@@ -1,4 +1,3 @@
-
 use poem::{EndpointExt, Route, Server, listener::TcpListener, post};
 use store::Store;
 use std::sync::Arc;
