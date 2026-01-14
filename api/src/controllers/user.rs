@@ -7,7 +7,6 @@ use poem::{
     web::{Data, Json},
 };
 use serde_json::json;
-use sqlx::error::DatabaseError;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -45,7 +44,7 @@ pub async fn create_user(
                         "success": false,
                         "error": "JWT creation failed"
                     });
-                    println!("JWT creation error: {:?}", e);
+                    eprintln!("JWT creation error: {:?}", e);
                     Err(Error::from_string(err.to_string(), StatusCode::INTERNAL_SERVER_ERROR))
                 }
             }
