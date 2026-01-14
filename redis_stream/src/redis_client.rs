@@ -83,16 +83,14 @@ impl RedisStream {
     }
 
     pub fn x_add(&mut self, id: &str, website_id:&str,website: &str) -> RedisResult<()> {
-        let payload = serde_json::json!({
-            "id":id,
-            "website_id": website_id,
-            "website": website
-        })
-        .to_string();
-
+        
         let _: RedisResult<()> =
             self.conn
-                .xadd("betteruptime:website", "*", &[("payload", payload)]);
+                .xadd("betteruptime:website", "*", &[
+                    ("id", id),
+                    ("website_id", website_id),
+                    ("url", website),
+                ]);
 
         Ok(())
     }
