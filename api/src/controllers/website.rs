@@ -23,7 +23,7 @@ pub async fn create_website(Json(body):Json<WebsiteInput>,data:Data<&Arc<Mutex<A
 
     match res{
         Ok(r)=>{
-            let _ = RedisStream::schedule_website(&mut redis_client, &id.user_id, r.url.as_str(), r.check_interval );
+            let _ = RedisStream::schedule_website(&mut redis_client, &r.id, r.url.as_str(), r.check_interval );
             Ok(Json(WebsiteOutput { success: (true), message: String::from("website inserted successfully") }))
 
         }
