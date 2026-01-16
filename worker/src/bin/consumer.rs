@@ -7,10 +7,14 @@ use tokio::sync::Semaphore;
 use uuid::Uuid;
 use std::sync::Arc;
 
-#[path = "../types.rs"]
-mod types;
-use types::PingResult;
 
+pub struct PingResult {
+    pub job_id: String,
+    pub website_id: String,
+    pub url: String,
+    pub user_id: String,
+    pub response: Result<reqwest::Response, reqwest::Error>,
+}
 // 1. Logic to push alerts to Redis for the Notifier
 fn send_alert_to_notifier(
     client: &mut RedisStream,
