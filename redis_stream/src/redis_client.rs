@@ -2,10 +2,10 @@ use chrono::Utc;
 use redis::{
     self, Commands, Connection, RedisResult, streams::{StreamReadOptions, StreamReadReply}
 };
+
 pub struct RedisStream {
     pub conn: Connection,
 }
-
 
 impl RedisStream {
     pub fn new(url: &str) -> RedisResult<Self> {
@@ -14,36 +14,37 @@ impl RedisStream {
         Ok(Self { conn })
     }
 
-    // used sorted set to schedule my website to insert them in redis stream based on timestamp.
+    // UPDATED: Added 'email' parameter to store user contact info
     pub fn schedule_website(
         &mut self,
         id: &str,
         website_url: &str,
-        interval_sec: Option<i32>,
+        interval_sec: i32, // Changed to i32 to match your handler logic usually, or keep Option if you prefer
+        email: &str,       // <--- NEW PARAMETER
     ) -> RedisResult<()> {
         let now = Utc::now().timestamp();
 
-        let _:RedisResult<()> = self.conn.zadd("betteruptime:schedule", id, now);
+        let _: RedisResult<()> = self.conn.zadd("betteruptime:schedule", id, now);
         
         let key = format!("betteruptime:site:{}", id);
-        let interval = match interval_sec{
-            Some(i)=>i.to_string(),
-            None=>"60".to_string(),
-        };
-        let _:RedisResult<()> = self.conn.hset_multiple(
+        
+        // Handling interval logic
+        let interval = interval_sec.to_string();
+
+        let _: RedisResult<()> = self.conn.hset_multiple(
             &key,
             &[
-                ("id",id),
+                ("id", id),
                 ("url", website_url),
-                ("interval",interval.as_str()),
+                ("interval", interval.as_str()),
+                ("email", email), // <--- Storing Email in Redis Hash
             ],
         );
 
         Ok(())
     }
 
-    pub fn 
-    process_due_websites(&mut self)->RedisResult<()>{
+    pub fn process_due_websites(&mut self) -> RedisResult<()> {
         let now = Utc::now().timestamp();
         
         let due_websites: Vec<String> = self.conn.zrangebyscore(
@@ -54,16 +55,23 @@ impl RedisStream {
 
         for website_id in due_websites {
             let key = format!("betteruptime:site:{}", website_id);
+            
+            // Fetching existing data
             let website_url: String = self.conn.hget(&key, "url")?;
             let interval: u64 = self.conn.hget(&key, "interval")?;
-            let id:String = self.conn.hget(&key,"id")?;
-            self.x_add(&id,&website_id, &website_url)?;
+            let id: String = self.conn.hget(&key, "id")?;
+            
+            // NEW: Fetching Email from Hash
+            let email: String = self.conn.hget(&key, "email")?; 
+
+            // Passing email to the stream function
+            self.x_add(&id, &website_id, &website_url, &email)?;
 
             // removing the website from schedule and reschedule it with next timestamp
-            let _ :i64 = self.conn.zrem("betteruptime:schedule", &website_id)?;
+            let _: i64 = self.conn.zrem("betteruptime:schedule", &website_id)?;
 
             let next_time = now + interval as i64;
-            let _:RedisResult<()> = self.conn.zadd("betteruptime:schedule", &website_id, next_time);
+            let _: RedisResult<()> = self.conn.zadd("betteruptime:schedule", &website_id, next_time);
         }
 
         Ok(())
@@ -82,7 +90,8 @@ impl RedisStream {
         Ok(())
     }
 
-    pub fn x_add(&mut self, id: &str, website_id:&str,website: &str) -> RedisResult<()> {
+    // UPDATED: Added 'email' parameter to send it to the Consumer
+    pub fn x_add(&mut self, id: &str, website_id: &str, website: &str, email: &str) -> RedisResult<()> {
         
         let _: RedisResult<()> =
             self.conn
@@ -90,6 +99,7 @@ impl RedisStream {
                     ("id", id),
                     ("website_id", website_id),
                     ("url", website),
+                    ("email", email), // <--- Adding Email to the Job Card
                 ]);
 
         Ok(())
@@ -107,6 +117,4 @@ impl RedisStream {
 
         Ok(reply)
     }
-
-
 }
