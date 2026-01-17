@@ -26,4 +26,13 @@ impl Store{
             }
         }
     }
+
+    // to fetch user's email id
+    pub async fn get_user_email(&self, user_id: &str) -> Result<String, sqlx::Error> {
+        let rec = sqlx::query!("SELECT email FROM users WHERE id = $1", user_id)
+            .fetch_one(&self.conn)
+            .await?;
+        
+        Ok(rec.email)
+    }
 }
