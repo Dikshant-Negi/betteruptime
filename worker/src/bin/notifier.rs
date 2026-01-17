@@ -1,21 +1,19 @@
-use futures::{future, stream::FuturesUnordered};
-use lettre::{Message, SmtpTransport, Transport, transport::smtp::authentication::Credentials};
+use lettre::{Message, SmtpTransport, Transport, transport::smtp::{authentication::Credentials}};
 use redis::{
     Commands, RedisResult,
     streams::{StreamReadOptions, StreamReadReply},
 };
 use redis_stream::redis_client::RedisStream;
-use std::{fmt::format, option, time::Duration};
 use tokio;
 use uuid::Uuid;
+use chrono::prelude::*;
 
-async fn send_email_via_smtp(target_email: &str, website_url: &str, reason: &str) {
+async fn send_email_via_smtp(target_email: &str, website_url: &str, reason: &str) ->bool {
     println!("Sending Email To {}...", target_email);
 
     // Sender's Email and Password.
-
-    let smtp_email = "pandeyg9010@gmail.com";
-    let smtp_password = "sbpn zzgi eobf hiky";
+    let smtp_email = std::env::var("SMTP_EMAIL").expect("email");
+    let smtp_password = std::env::var("SMTP_PASSWORD").expect("password");
 
     let email = Message::builder()
         .from("Uptime Bot <pandey@uptime.com>".parse().unwrap())
@@ -34,11 +32,16 @@ async fn send_email_via_smtp(target_email: &str, website_url: &str, reason: &str
         .credentials(creds)
         .build();
 
-    //send the mail
+    // send the mail
     match tokio::task::spawn_blocking(move || mailer.send(&email)).await {
-        Ok(Ok(_)) => println!("Email sent successfully!"),
-        Ok(Err(e)) => eprintln!("Email API Failed: {:?}", e),
-        Err(e) => eprintln!("Task Join Error {:?}", e),
+        Ok(Ok(_)) => {
+            println!("Email sent successfully!");
+            true
+        },
+        _ => {
+            eprintln!("Email sending Failed.");
+            false
+        }
     }
 }
 
@@ -50,14 +53,13 @@ pub async fn consume_alerts() -> RedisResult<()> {
     println!("notifier connecting to Redis...");
     let mut client = RedisStream::new(&redis_url)?;
 
-    //creating a new stream "betteruptime:alerts" with th group name of "alert-checker"
+    // creating a new stream "betteruptime:alerts" with the group name of "alert-checker"
     let _: RedisResult<()> =
         client
             .conn
             .xgroup_create_mkstream("betteruptime:alerts", "alert-checker", "$");
 
     println!("Notifier Connected..");
-
     println!("Notifier Service Started. Listening for alerts...");
 
     loop {
@@ -75,6 +77,7 @@ pub async fn consume_alerts() -> RedisResult<()> {
             Ok(opts) => {
                 for entry in opts.keys {
                     for job in entry.ids {
+                        // extract data from the stream
                         let url_val = job.map.get("website_url");
                         let email_val = job.map.get("user_email");
                         let reason_val = job.map.get("reason");
@@ -90,7 +93,23 @@ pub async fn consume_alerts() -> RedisResult<()> {
                             let reason = String::from_utf8(r.to_vec()).unwrap();
 
                             println!("Alert Received: {} is DOWN! Reason: {}", url, reason);
-                            send_email_via_smtp(&email, &url, &reason).await;
+                            
+                            // Send the email
+                            let success = send_email_via_smtp(&email, &url, &reason).await;
+
+                            if success {
+                                let _: ()= client.conn.xack("betteruptime:alerts", "alert-checker", &[job.id.as_str()]).unwrap_or_default();
+                                let _: () = client.conn.xdel("betteruptime:alerts", &[&job.id]).unwrap_or_default();
+                            } else {
+                                let retry_at = chrono::Utc::now().timestamp() + 60;
+                                let retry_data = format!("{}|{}|{}", email, url, reason);
+
+                                println!("Scheduling retry for {} in 60 seconds...", email);
+
+                                let _: () = client.conn.zadd("betteruptime:retry_alerts", retry_data, retry_at).unwrap_or_default();
+                                let _: () = client.conn.xack(("betteruptime:alert", ), "alert-checker", &[&job.id]).unwrap_or_default();
+
+                            }
                         }
                     }
                 }
@@ -105,9 +124,42 @@ pub async fn consume_alerts() -> RedisResult<()> {
         }
     }
 }
+async fn start_retry_worker(redis_url: String){
+    let mut client = RedisStream::new(&redis_url).unwrap();
+    println!("Retrying...");
 
+    loop {
+        let now = chrono::Utc::now().timestamp();
+
+        let pending: Vec<String> = client.conn.zrangebyscore("betteruptime:retry_alerts", "-inf", now).unwrap_or_default();
+
+        for item in pending {
+            let parts: Vec<&str> = item.split('|').collect();
+            if parts.len() == 3 {
+                println!("Retrying failed email for {}...", parts[0]);
+                if send_email_via_smtp(parts[0], parts[1], parts[2]).await {
+                    // If successful now, remove from retry set
+                    let _: () = client.conn.zrem("betteruptime:retry_alerts", &item).unwrap_or_default();
+                } else {
+                    // If failed again, update timestamp to try in another 5 minutes
+                    let next_try = chrono::Utc::now().timestamp() + 300;
+                    let _: () = client.conn.zadd("betteruptime:retry_alerts", &item, next_try).unwrap_or_default();
+                    println!("Retry failed again. Rescheduled for 5 mins later.");
+                }
+            }
+        }
+        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+    }
+}
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
+    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL");
+    
+    let url_clone = redis_url.clone();
+    tokio::spawn(async move {
+        start_retry_worker(url_clone).await;
+    });
     if let Err(e) = consume_alerts().await {
         eprintln!("Error: {}", e);
     }
