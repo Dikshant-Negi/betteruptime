@@ -7,7 +7,6 @@ use poem::{
     web::{Data, Json},
 };
 use serde_json::json;
-use sqlx::error::DatabaseError;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

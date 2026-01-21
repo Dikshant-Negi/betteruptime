@@ -6,12 +6,11 @@ use redis::{
 use redis_stream::redis_client::RedisStream;
 use tokio;
 use uuid::Uuid;
-use chrono::prelude::*;
+use chrono;
 
 async fn send_email_via_smtp(target_email: &str, website_url: &str, reason: &str) ->bool {
     println!("Sending Email To {}...", target_email);
 
-    // Sender's Email and Password.
     let smtp_email = std::env::var("SMTP_EMAIL").expect("email");
     let smtp_password = std::env::var("SMTP_PASSWORD").expect("password");
 
@@ -94,7 +93,7 @@ pub async fn consume_alerts() -> RedisResult<()> {
 
                             println!("Alert Received: {} is DOWN! Reason: {}", url, reason);
                             
-                            // Send the email
+                            // call the function to send the email
                             let success = send_email_via_smtp(&email, &url, &reason).await;
 
                             if success {

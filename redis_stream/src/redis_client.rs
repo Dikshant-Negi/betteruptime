@@ -14,13 +14,12 @@ impl RedisStream {
         Ok(Self { conn })
     }
 
-    // UPDATED: Added 'email' parameter to store user contact info
     pub fn schedule_website(
         &mut self,
         id: &str,
         website_url: &str,
-        interval_sec: i32, // Changed to i32 to match your handler logic usually, or keep Option if you prefer
-        email: &str,       // <--- NEW PARAMETER
+        interval_sec: i32, 
+        user_id: &str,      
     ) -> RedisResult<()> {
         let now = Utc::now().timestamp();
 
@@ -28,7 +27,6 @@ impl RedisStream {
         
         let key = format!("betteruptime:site:{}", id);
         
-        // Handling interval logic
         let interval = interval_sec.to_string();
 
         let _: RedisResult<()> = self.conn.hset_multiple(
@@ -37,7 +35,7 @@ impl RedisStream {
                 ("id", id),
                 ("url", website_url),
                 ("interval", interval.as_str()),
-                ("email", email), // <--- Storing Email in Redis Hash
+                ("user_id", user_id), 
             ],
         );
 
@@ -56,22 +54,29 @@ impl RedisStream {
         for website_id in due_websites {
             let key = format!("betteruptime:site:{}", website_id);
             
-            // Fetching existing data
-            let website_url: String = self.conn.hget(&key, "url")?;
-            let interval: u64 = self.conn.hget(&key, "interval")?;
-            let id: String = self.conn.hget(&key, "id")?;
-            
-            // NEW: Fetching Email from Hash
-            let email: String = self.conn.hget(&key, "email")?; 
+            //Use Option<> to handle missing data gracefully
+            let website_url: Option<String> = self.conn.hget(&key, "url")?;
+            let interval: Option<u64> = self.conn.hget(&key, "interval")?;
+            let id: Option<String> = self.conn.hget(&key, "id")?;
+            let user_id: Option<String> = self.conn.hget(&key, "user_id")?;
 
-            // Passing email to the stream function
-            self.x_add(&id, &website_id, &website_url, &email)?;
+            // Only proceed if we have the critical data (URL and UserID)
+            if let (Some(url), Some(uid)) = (website_url, user_id) {
+                let actual_id = id.unwrap_or(website_id.clone());
+                
+                // Add to stream
+                self.x_add(&actual_id, &website_id, &url, &uid)?;
 
-            // removing the website from schedule and reschedule it with next timestamp
-            let _: i64 = self.conn.zrem("betteruptime:schedule", &website_id)?;
-
-            let next_time = now + interval as i64;
-            let _: RedisResult<()> = self.conn.zadd("betteruptime:schedule", &website_id, next_time);
+                // Reschedule
+                let _: i64 = self.conn.zrem("betteruptime:schedule", &website_id)?;
+                let interval_val = interval.unwrap_or(60);
+                let next_time = now + interval_val as i64;
+                let _: RedisResult<()> = self.conn.zadd("betteruptime:schedule", &website_id, next_time);
+            } else {
+                //If data is missing, remove it from the schedule
+                println!("Found corrupted data for {}, removing from schedule.", website_id);
+                let _: i64 = self.conn.zrem("betteruptime:schedule", &website_id)?;
+            }
         }
 
         Ok(())
@@ -90,8 +95,7 @@ impl RedisStream {
         Ok(())
     }
 
-    // UPDATED: Added 'email' parameter to send it to the Consumer
-    pub fn x_add(&mut self, id: &str, website_id: &str, website: &str, email: &str) -> RedisResult<()> {
+    pub fn x_add(&mut self, id: &str, website_id: &str, website: &str, user_id: &str) -> RedisResult<()> {
         
         let _: RedisResult<()> =
             self.conn
@@ -99,7 +103,7 @@ impl RedisStream {
                     ("id", id),
                     ("website_id", website_id),
                     ("url", website),
-                    ("email", email), // <--- Adding Email to the Job Card
+                    ("user_id", user_id),
                 ]);
 
         Ok(())
