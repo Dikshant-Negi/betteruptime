@@ -1,18 +1,103 @@
 import { Link } from "react-router-dom";
 import Input from "../store/Input";
 import { useEffect, useRef, useState } from "react";
-
+import StepDots from "../store/StepDots";
+import { validation } from "../../utility/extra";
 export default function SignUp() {
-  let ref = useRef<HTMLInputElement>(null);
-  let [active, setIsActive] = useState<boolean>(false);
+  let ref = useRef<{
+    username: HTMLInputElement | null;
+    email: HTMLInputElement | null;
+    password: HTMLInputElement | null;
+  }>({ username: null, email: null, password: null });
+
+  let [step, setStep] = useState<number>(1);
+
   let [payload, setPayLoad] = useState<{
+    username: string | null;
     email: string | null;
     password: string | null;
-  }>({ email: null, password: null });
+  }>({ username: null, email: null, password: null });
+
+  let [error, setError] = useState<{
+    username: string;
+    email: string;
+    password: string;
+  }>({ username: "", email: "", password: "" });
 
   useEffect(() => {
-    ref.current?.focus();
-  });
+    if (step == 1) {
+      ref.current?.username?.focus();
+    } else if (step == 2) {
+      ref.current?.email?.focus();
+    } else if (step == 3) {
+      ref.current?.password?.focus();
+    }
+  }, [step]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (step <= 3) {
+      if (step == 1 && !validation(payload.username, "username", setError)) {
+        setError(
+          (prev: { username: string; email: string; password: string }) => ({
+            ...prev,
+            username: "Atleast 4 characters with letters",
+          }),
+        );
+        return;
+      } else if (step == 2 && !validation(payload.email, "email", setError)) {
+        setError(
+          (prev: { username: string; email: string; password: string }) => ({
+            ...prev,
+            email: "Please enter a valid email address",
+          }),
+        );
+        return;
+      } else if (
+        step == 3 &&
+        !validation(payload.password, "password", setError)
+      ) {
+        setError(
+          (prev: { username: string; email: string; password: string }) => ({
+            ...prev,
+            password:
+              "Password cannot be empty and must be at least 6 characters",
+          }),
+        );
+        return;
+      }
+    }
+
+    if (step <= 3) {
+      if (step == 1 && validation(payload.username, "username", setError)) {
+        setError(
+          (prev: { username: string; email: string; password: string }) => ({
+            ...prev,
+            username: "",
+          }),
+        );
+      } else if (
+        step == 2 &&
+        validation(payload.username, "username", setError)
+      ) {
+        setError(
+          (prev: { username: string; email: string; password: string }) => ({
+            ...prev,
+            email: "",
+          }),
+        );
+      } else {
+        setError(
+          (prev: { username: string; email: string; password: string }) => ({
+            ...prev,
+            password: "",
+          }),
+        );
+      }
+      setStep(step < 3 ? step + 1 : step);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-primary-100">
@@ -30,10 +115,35 @@ export default function SignUp() {
           </Link>
         </div>
 
-        <div className="w-full flex flex-col gap-4 mt-4">
-          {!active ? (
+        <form
+          onSubmit={handleSubmit}
+          className="w-full flex flex-col gap-4 mt-4"
+        >
+          {step == 1 ? (
             <Input
-              ref={ref}
+              ref={(el) => {
+                if (ref.current) ref.current.username = el;
+              }}
+              label="Username"
+              inputName="username"
+              type="text"
+              text={payload.username != null ? payload.username : ""}
+              inputProp="h-10 px-3 rounded-md  "
+              placeholder="Your username"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPayLoad({
+                  ...payload,
+                  username: (e.target as HTMLInputElement).value as string,
+                })
+              }
+              pattern="(?=.*[a-z]).{4,}"
+              error={error.username}
+            />
+          ) : step == 2 ? (
+            <Input
+              ref={(el) => {
+                if (ref.current) ref.current.email = el;
+              }}
               label="E-mail"
               inputName="email"
               type="email"
@@ -46,9 +156,13 @@ export default function SignUp() {
                   email: (e.target as HTMLInputElement).value as string,
                 })
               }
+              error={error.email}
             />
           ) : (
             <Input
+              ref={(el) => {
+                if (ref.current) ref.current.password = el;
+              }}
               text={payload.password != null ? payload.password : ""}
               type="text"
               label="Password"
@@ -61,20 +175,20 @@ export default function SignUp() {
                   password: (e.target as HTMLInputElement).value as string,
                 })
               }
+              error={error.password}
             />
           )}
-        </div>
+          <button
+            className="w-full mt-4 py-3 rounded-xl bg-indigo-500 cursor-pointer hover:bg-indigo-600 transition text-white font-medium"
+            type="submit"
+          >
+            {step == 3 ? "Sign Up" : "Next"}
+          </button>
+        </form>
 
-        <button
-          className="w-full mt-4 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 transition text-white font-medium"
-          onClick={() => {
-            setIsActive(active == false ? true : false);
-          }}
-        >
-          {active ? "Sign Up" : "Next"}
-        </button>
+        <StepDots setStep={setStep} n={3} step={step} />
 
-        <p className="text-xs text-slate-500 text-center mt-6">
+        <p className="text-xs text-slate-500 text-center pt-6">
           You acknowledge that you read, and agree to our{" "}
           <Link to="/terms" className="text-blue-400 hover:underline">
             Terms of Service
