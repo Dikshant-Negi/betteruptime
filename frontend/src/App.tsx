@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SignUp from "./components/login/SignUp";
 import SignIn from "./components/login/SignIn";
-
+import AddMonitor from "./components/dashboard/AddMonitor";
 
 function App() {
  
@@ -11,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/addmonitor" element={<AddMonitor/>} />
       </Routes>
     </BrowserRouter>
   );

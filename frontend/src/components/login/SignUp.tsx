@@ -1,9 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Input from "../store/Input";
 import { useEffect, useRef, useState } from "react";
 import StepDots from "../store/StepDots";
 import { validation } from "../../utility/extra";
+import logo from "../../assets/logo.png";
+import { authRegister } from "../../api/api";
+
 export default function SignUp() {
+  const navigate = useNavigate();
   let ref = useRef<{
     username: HTMLInputElement | null;
     email: HTMLInputElement | null;
@@ -11,6 +15,7 @@ export default function SignUp() {
   }>({ username: null, email: null, password: null });
 
   let [step, setStep] = useState<number>(1);
+  let [isLoading, setIsLoading] = useState<boolean>(false);
 
   let [payload, setPayLoad] = useState<{
     username: string | null;
@@ -34,7 +39,7 @@ export default function SignUp() {
     }
   }, [step]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (step <= 3) {
@@ -77,6 +82,7 @@ export default function SignUp() {
             username: "",
           }),
         );
+        setStep(step + 1);
       } else if (
         step == 2 &&
         validation(payload.username, "username", setError)
@@ -87,6 +93,7 @@ export default function SignUp() {
             email: "",
           }),
         );
+        setStep(step + 1);
       } else {
         setError(
           (prev: { username: string; email: string; password: string }) => ({
@@ -94,8 +101,22 @@ export default function SignUp() {
             password: "",
           }),
         );
+        if(payload.email && payload.password && payload.username){
+          setIsLoading(true);
+          try {
+            const response = await authRegister(payload.email, payload.password, payload.username);
+            if(response.success) {
+              localStorage.setItem('token', response.jwt);
+              navigate('/AddMonitor');//later / dashboard
+            } 
+          } catch (err) {
+            console.error("Signup Failed", err);
+            setError((prev) => ({...prev, password: "Email already exist"}));
+          } finally {
+            setIsLoading(false);
+          }
+        }
       }
-      setStep(step < 3 ? step + 1 : step);
     }
   };
 
@@ -103,7 +124,7 @@ export default function SignUp() {
     <div className="min-h-screen w-full flex items-center justify-center bg-primary-100">
       <div className="w-full max-w-md flex flex-col items-center gap-6 text-white p-8">
         <div className="mb-2">
-          <img src="/logo.png" alt="Logo" className="w-12 h-12" />
+          <img src= {logo} alt="Logo" className="h-20 w-20 rounded-full object-contain bg-black mx-auto mb-6" />
         </div>
 
         <h1 className="text-3xl font-semibold">Sign up for free</h1>
@@ -181,8 +202,9 @@ export default function SignUp() {
           <button
             className="w-full mt-4 py-3 rounded-xl bg-indigo-500 cursor-pointer hover:bg-indigo-600 transition text-white font-medium"
             type="submit"
+            disabled={isLoading}
           >
-            {step == 3 ? "Sign Up" : "Next"}
+            {isLoading ? "Creating Account..." : (step == 3 ? "Sign Up" : "Next")}
           </button>
         </form>
 

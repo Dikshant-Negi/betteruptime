@@ -1,7 +1,7 @@
 use crate::controllers::{user, website};
 use crate::extra::app_state::AppState;
 use crate::extra::auth_middleware::TokenMiddleware;
-use poem::{EndpointExt, Route, Server, listener::TcpListener, post};
+use poem::{EndpointExt, Route, Server, listener::TcpListener, post, middleware::Cors};
 use redis_stream::redis_client::RedisStream;
 use std::sync::Arc;
 use store::Store;
@@ -47,8 +47,13 @@ async fn main() -> Result<(), std::io::Error> {
             "/createwebsite",
             post(website::create_website).with(TokenMiddleware),
         );
+    
+    let cors = Cors::new()
+        .allow_origin("http://localhost:5173")
+        .allow_methods(vec![poem::http::Method::GET, poem::http::Method::POST])
+        .allow_credentials(true);
 
-    let app = Route::new().nest("/api", api).data(state.clone());
+    let app = Route::new().nest("/api", api).data(state.clone()).with(cors);
 
     Server::new(TcpListener::bind("0.0.0.0:3000"))
         .name("betteruptime")

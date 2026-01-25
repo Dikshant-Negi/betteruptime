@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @tailwind utilities;
+
 body {
     min-height: 100vh;
     width: 100vw;
@@ -12,4 +13,9 @@ body {
 
 @theme{
     --color-primary-100: #0f172a;
+    --color-card-bg: #0f172a;
+    --color-input-bg: #020617;
+    --color-card-header: #1e293b;
+    --color-border-main: #334155;
+    --color-brand-blue: #60a5fa;
 }

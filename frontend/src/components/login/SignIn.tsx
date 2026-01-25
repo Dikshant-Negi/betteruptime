@@ -1,10 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Input from "../store/Input";
 import { useEffect, useRef, useState } from "react";
+import logo from "../../assets/logo.png";
+import { authLogin } from "../../api/api";
 
 export default function SignIn() {
+  const navigate = useNavigate();
   let ref = useRef<HTMLInputElement>(null);
   let [active, setIsActive] = useState<boolean>(false);
+  let [isLoading, setIsLoading] = useState<boolean>(false);
   let [payload, setPayLoad] = useState<{
     email: string | null;
     password: string | null;
@@ -13,12 +17,36 @@ export default function SignIn() {
   useEffect(() => {
     ref.current?.focus();
   });
+  
+  const handleLogin = async () => {
+    if(!active) {
+      if(payload.email) setIsActive(true);
+      return;
+    }
+
+    if(payload.email && payload.password) {
+      setIsLoading(true);
+      try {
+        const response = await authLogin(payload.email, payload.password);
+
+        if(response.success) {
+          localStorage.setItem('token', response.jwt);
+          navigate('/AddMonitor'); //later /dashboard
+        }
+      } catch (err) {
+        console.error("Login failed:", err);
+        alert("Invalid credentials");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-primary-100">
       <div className="w-full max-w-md flex flex-col items-center gap-6 text-white p-8">
         <div className="mb-2">
-          <img src="/logo.png" alt="Logo" className="w-12 h-12" />
+          <img src={logo} alt="Logo" className="h-20 w-20 rounded-full object-contain bg-black mx-auto mb-6" />
         </div>
 
         <h1 className="text-3xl font-semibold">Welcome back</h1>
@@ -67,11 +95,10 @@ export default function SignIn() {
 
         <button
           className="w-full mt-4 py-3 rounded-xl bg-indigo-500 cursor-pointer hover:bg-indigo-600 transition text-white font-medium"
-          onClick={() => {
-            setIsActive(active == false ? true : false);
-          }}
+          onClick={handleLogin}
+          disabled={isLoading}
         >
-          {active ? "Sign Up" : "Next"}
+          {isLoading ? "Signing in..." : active ? "Sign in" : "Next"}
         </button>
 
         <p className="text-xs text-slate-500 text-center mt-6">

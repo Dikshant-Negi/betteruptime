@@ -15,6 +15,7 @@ export default function StepDots({
       {Array.from({ length: n }, (_, index) => {
         return (
           <span
+            key={index}
             onClick={() => setStep(index + 1)}
             className={`h-3 w-3 rounded-full inline-block mx-1 cursor-pointer ${index + 1 == step ? "bg-indigo-500" : "bg-white"}`}
           ></span>
