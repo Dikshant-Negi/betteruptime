@@ -23,6 +23,8 @@ export interface Website {
   url: string;
   check_interval: number;
   stats?: WebsiteStats;
+  status: string;
+  last_checked_at: number;
 }
 
 export interface Incident {

@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SignUp from "./components/login/SignUp";
 import SignIn from "./components/login/SignIn";
-import AddMonitor from "./components/dashboard/AddMonitor";
+import DashBoard from "./components/dashboard/Dashboard";
+import { PrivateRoute } from "./components/auth/PrivateRoute";
 
 function App() {
  
@@ -11,7 +12,13 @@ function App() {
       <Routes>
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
-        <Route path="/addmonitor" element={<AddMonitor/>} />
+        
+        <Route path="/dashboard" element={
+          <PrivateRoute>
+            <DashBoard/>
+          </PrivateRoute>
+          } 
+        />
       </Routes>
     </BrowserRouter>
   );

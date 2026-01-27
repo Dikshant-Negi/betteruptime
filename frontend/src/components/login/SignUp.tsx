@@ -107,7 +107,7 @@ export default function SignUp() {
             const response = await authRegister(payload.email, payload.password, payload.username);
             if(response.success) {
               localStorage.setItem('token', response.jwt);
-              navigate('/AddMonitor');//later / dashboard
+              navigate('/dashboard');//later / dashboard
             } 
           } catch (err) {
             console.error("Signup Failed", err);

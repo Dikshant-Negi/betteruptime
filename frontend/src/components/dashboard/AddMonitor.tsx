@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Input from "../store/Input";
-import {X, Globe} from "lucide-react";
+import { X, Globe } from "lucide-react";
+import { createWebsite } from '../../api/api';
 
 const Interval_option = [
     {label: "Every 1 minute(minimun)", value: 60},
@@ -10,8 +10,13 @@ const Interval_option = [
     {label: "Every 4 minute", value: 240},
 ]
 
-export default function AddMonitor() {
-    const navigate = useNavigate();
+interface AddMonitorProps {
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+export default function AddMonitor({onClose, onSuccess}: AddMonitorProps) {
+
     const [payload, setPayLoad] = useState({
         url: "",
         name: "",
@@ -23,7 +28,8 @@ export default function AddMonitor() {
         name:"",
         url:""
     })
-    const handleSubmit = () => {
+
+    const handleSubmit = async () => {
         
         const newErrors = {name: "", url: ""};
         let hasError = false;
@@ -50,10 +56,21 @@ export default function AddMonitor() {
 
         console.log("Adding Monitor:", payload);
         setIsLoading(true);
-        setTimeout(() => {
+        try {
+            await createWebsite ({
+               name: payload.name,
+               url: payload.url,
+               check_interval: payload.interval
+            });
+
+            onSuccess();
+            onClose();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to add website");
+        } finally {
             setIsLoading(false);
-            navigate("/signup"); //{onClose}
-        }, 1000);
+        }
     };
 
     return (
@@ -67,7 +84,7 @@ export default function AddMonitor() {
                         Add New Monitor
                     </h2>
 
-                    <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white transition">
+                    <button onClick={onClose} className="text-slate-400 hover:text-white transition">
                         <X size={20} />
                     </button>
                 </div>
@@ -119,7 +136,7 @@ export default function AddMonitor() {
                 </div>
 
                 <div className="px-6 py-4 bg-card-header/50 border-t border-border-main flex justify-end gap-3">
-                    <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition">
                         Cancel
                     </button>
                     <button onClick={handleSubmit} disabled={isLoading} className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">

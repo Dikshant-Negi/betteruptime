@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type {
-    AuthResponse
+    AuthResponse, Website
 } from '../types/types';
 const API_BASE_URL = 'http://localhost:3000';
 
@@ -33,5 +33,15 @@ export const authRegister = async(email: string, password: string, username: str
 
 export const authLogin = async (email: string, password: string): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/api/signin', {email, password});
+    return response.data;
+};
+
+export const createWebsite = async(payload: {name: string, url: string, check_interval: number}) => {
+    const response = await api.post('/api/createwebsite', payload);
+    return response.data;
+}
+
+export const fetchWebsite = async (): Promise<Website[]> => {
+    const response = await api.get<Website[]>('/api/getwebsites');
     return response.data;
 };
