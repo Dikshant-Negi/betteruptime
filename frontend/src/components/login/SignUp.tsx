@@ -5,9 +5,29 @@ import StepDots from "../store/StepDots";
 import { validation } from "../../utility/extra";
 import logo from "../../assets/logo.png";
 import { authRegister } from "../../api/api";
+import { useMutation  } from "@tanstack/react-query";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const signupMutation = useMutation({
+    mutationFn: (data: 
+      {
+        email: string, password:string, username:string
+      }) => authRegister(data.email, data.password, data.username),
+
+      onSuccess: (response) => {
+        if(response.success){
+          localStorage.setItem("token", response.jwt);
+          console.log("user added successfully");
+          navigate("/dashboard");
+        }
+      }, 
+      onError: () => {
+        alert("Email already exist go to Signin");
+        navigate("/dashboard");
+      },
+
+  });
   let ref = useRef<{
     username: HTMLInputElement | null;
     email: HTMLInputElement | null;
@@ -15,7 +35,6 @@ export default function SignUp() {
   }>({ username: null, email: null, password: null });
 
   let [step, setStep] = useState<number>(1);
-  let [isLoading, setIsLoading] = useState<boolean>(false);
 
   let [payload, setPayLoad] = useState<{
     username: string | null;
@@ -102,19 +121,11 @@ export default function SignUp() {
           }),
         );
         if(payload.email && payload.password && payload.username){
-          setIsLoading(true);
-          try {
-            const response = await authRegister(payload.email, payload.password, payload.username);
-            if(response.success) {
-              localStorage.setItem('token', response.jwt);
-              navigate('/dashboard');//later / dashboard
-            } 
-          } catch (err) {
-            console.error("Signup Failed", err);
-            setError((prev) => ({...prev, password: "Email already exist"}));
-          } finally {
-            setIsLoading(false);
-          }
+          signupMutation.mutate({
+            email: payload.email,
+            password: payload.password,
+            username: payload.password,
+          });
         }
       }
     }
@@ -202,9 +213,9 @@ export default function SignUp() {
           <button
             className="w-full mt-4 py-3 rounded-xl bg-indigo-500 cursor-pointer hover:bg-indigo-600 transition text-white font-medium"
             type="submit"
-            disabled={isLoading}
+            disabled={signupMutation.isPending}
           >
-            {isLoading ? "Creating Account..." : (step == 3 ? "Sign Up" : "Next")}
+            {signupMutation.isPending ? "Creating Account..." : (step == 3 ? "Sign Up" : "Next")}
           </button>
         </form>
 

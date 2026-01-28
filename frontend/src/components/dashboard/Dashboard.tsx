@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { LayoutDashboard, Globe, Plus, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchWebsite} from "../../api/api";
 import type { Website } from "../../types/types";
@@ -10,6 +10,7 @@ import logo from '../../assets/logo.png'
 
 export default function DashBoard() {
     const navigate = useNavigate();
+    const location = useLocation();
     const queryClient = useQueryClient();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,6 +19,8 @@ export default function DashBoard() {
         queryKey: ["website"],
         queryFn: fetchWebsite,
         retry: 1,
+        refetchInterval: 60000,
+        refetchIntervalInBackground: true,
     });
 
     const totalSites = website.length;
@@ -42,7 +45,7 @@ export default function DashBoard() {
                     </div>
 
                     <nav className="space-y-2">
-                        <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={true} onClick={() => navigate("/dashboard")} />
+                        <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={location.pathname === "/dashboard"} onClick={() => navigate("/dashboard")} />
                     </nav>   
                 </div>
 
@@ -71,7 +74,7 @@ export default function DashBoard() {
                                 className="bg-brand-blue hover:opacity-90 text-primary-100 px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-brand-blue/20"
                             >
                                 <Plus size={18} />
-                                <span className="hidden sm:inline">Add Monitor</span> {/* Optional: Hide text on very small phones */}
+                                <span className="hidden sm:inline">Add Monitor</span> 
                             </button>
                         </div>
                     </header>
@@ -91,7 +94,7 @@ export default function DashBoard() {
 
                     {isError && (
                         <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6">
-                            Faild to load websites.
+                            Faild to load websites!
                         </div>
                     )}
 
@@ -127,7 +130,7 @@ function SidebarItem({ icon, label, active = false, onClick }: { icon: any; labe
     <div
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
-        active 
+        active
           ? "bg-brand-blue text-primary-100 font-bold shadow-lg shadow-brand-blue/20" 
           : "hover:bg-card-header text-gray-400 hover:text-white"
       }`}

@@ -46,6 +46,10 @@ async fn main() -> Result<(), std::io::Error> {
         .at(
             "/createwebsite",
             post(website::create_website).with(TokenMiddleware),
+        )
+        .at(
+            "/getwebsites",
+            poem::get(website::get_websites).with(TokenMiddleware)
         );
     
     let cors = Cors::new()

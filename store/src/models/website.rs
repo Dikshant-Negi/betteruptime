@@ -1,6 +1,19 @@
 use crate::store::Store;
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
+use sqlx::FromRow;
 
+#[derive(Serialize, Deserialize, FromRow, Debug)]
+pub struct Website {
+    pub id: String,
+    pub user_id: String,
+    pub name: String,
+    pub url: String,
+    pub check_interval: i32,
+    pub status: Option<String>, 
+    pub last_checked_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>, 
+}
 pub struct Output {
     pub id: String,
     pub url: String,
@@ -16,8 +29,6 @@ impl Store {
         )
         .fetch_one(&self.conn)
         .await?;
-    
-        // Initialize website_stats entry
         sqlx::query!(
             "INSERT INTO website_stats (website_id, current_status, last_status_change, total_uptime_seconds, total_downtime_seconds) 
              VALUES ($1, 'UP'::text::website_status, NOW(), 0, 0)",
@@ -31,6 +42,22 @@ impl Store {
             url: res.url,
             check_interval: res.check_interval,
         })
+    }
+    pub async fn get_websites(&self, user_id: &str) -> Result<Vec<Website>, sqlx::Error> {
+        sqlx::query_as::<_, Website>(
+            r#"
+            SELECT 
+                id, user_id, name, url, check_interval, 
+                status::text, -- Cast ENUM to TEXT
+                last_checked_at, created_at 
+            FROM websites 
+            WHERE user_id = $1 
+            ORDER BY created_at DESC
+            "#
+        )
+        .bind(user_id)
+        .fetch_all(&self.conn)
+        .await
     }
 
     pub async fn update_last_checked(&self, website_id: &str, status: &str) -> Result<(), sqlx::Error> {

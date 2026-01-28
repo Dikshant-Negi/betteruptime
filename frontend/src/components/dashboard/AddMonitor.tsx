@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Input from "../store/Input";
 import { X, Globe } from "lucide-react";
 import { createWebsite } from '../../api/api';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Interval_option = [
     {label: "Every 1 minute(minimun)", value: 60},
@@ -15,7 +16,7 @@ interface AddMonitorProps {
     onSuccess: () => void;
 }
 
-export default function AddMonitor({onClose, onSuccess}: AddMonitorProps) {
+export default function AddMonitor({onClose}: AddMonitorProps) {
 
     const [payload, setPayLoad] = useState({
         url: "",
@@ -23,7 +24,19 @@ export default function AddMonitor({onClose, onSuccess}: AddMonitorProps) {
         interval: 60
     });
 
-    const [isLoading, setIsLoading] = useState(false);
+    const queryClient = useQueryClient();
+
+    const addwebsiteMutation = useMutation ({
+        mutationFn: createWebsite,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["website"]});
+            onClose();
+        },
+        onError: () => {
+            alert("Failed to add website");
+        },
+    });
+
     const [errors, setError] = useState ({
         name:"",
         url:""
@@ -55,22 +68,12 @@ export default function AddMonitor({onClose, onSuccess}: AddMonitorProps) {
         }
 
         console.log("Adding Monitor:", payload);
-        setIsLoading(true);
-        try {
-            await createWebsite ({
-               name: payload.name,
-               url: payload.url,
-               check_interval: payload.interval
-            });
-
-            onSuccess();
-            onClose();
-        } catch (err) {
-            console.error(err);
-            alert("Failed to add website");
-        } finally {
-            setIsLoading(false);
-        }
+        
+        addwebsiteMutation.mutate({
+            name: payload.name,
+            url: payload.url,
+            check_interval: payload.interval,
+        });
     };
 
     return (
@@ -139,8 +142,8 @@ export default function AddMonitor({onClose, onSuccess}: AddMonitorProps) {
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition">
                         Cancel
                     </button>
-                    <button onClick={handleSubmit} disabled={isLoading} className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        {isLoading? "Adding...": "Add Monitor"}
+                    <button onClick={handleSubmit} disabled={addwebsiteMutation.isPending} className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {addwebsiteMutation.isPending? "Adding...": "Add Monitor"}
                     </button>
                 </div>
 

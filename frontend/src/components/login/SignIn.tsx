@@ -3,17 +3,36 @@ import Input from "../store/Input";
 import { useEffect, useRef, useState } from "react";
 import logo from "../../assets/logo.png";
 import { authLogin } from "../../api/api";
+import { useMutation } from "@tanstack/react-query";
 
 export default function SignIn() {
   const navigate = useNavigate();
+
+  const signinMutation = useMutation({
+    mutationFn: (data: {
+      email:string;
+      password: string;
+    }) => authLogin(data.email, data.password),
+
+    onSuccess: (response) => {
+      if(response.success) {
+        localStorage.setItem("token", response.jwt);
+        console.log("Login Success");
+        navigate("/dashboard");
+      }
+    },
+    onError: () => {
+      alert("Invalid credentials");
+    },
+  });
+
   let ref = useRef<HTMLInputElement>(null);
   let [active, setIsActive] = useState<boolean>(false);
-  let [isLoading, setIsLoading] = useState<boolean>(false);
   let [payload, setPayLoad] = useState<{
     email: string | null;
     password: string | null;
   }>({ email: null, password: null });
-
+   
   useEffect(() => {
     ref.current?.focus();
   });
@@ -25,20 +44,10 @@ export default function SignIn() {
     }
 
     if(payload.email && payload.password) {
-      setIsLoading(true);
-      try {
-        const response = await authLogin(payload.email, payload.password);
-
-        if(response.success) {
-          localStorage.setItem('token', response.jwt);
-          navigate('/dashboard'); //later /dashboard
-        }
-      } catch (err) {
-        console.error("Login failed:", err);
-        alert("Invalid credentials");
-      } finally {
-        setIsLoading(false);
-      }
+      signinMutation.mutate({
+        email: payload.email,
+        password: payload.password,
+      });
     }
   }
 
@@ -96,9 +105,9 @@ export default function SignIn() {
         <button
           className="w-full mt-4 py-3 rounded-xl bg-indigo-500 cursor-pointer hover:bg-indigo-600 transition text-white font-medium"
           onClick={handleLogin}
-          disabled={isLoading}
+          disabled={signinMutation.isPending}
         >
-          {isLoading ? "Signing in..." : active ? "Sign in" : "Next"}
+          {signinMutation.isPending ? "Signing in..." : active ? "Sign in" : "Next"}
         </button>
 
         <p className="text-xs text-slate-500 text-center mt-6">
