@@ -3,9 +3,9 @@ import Input from "../store/Input";
 import { useEffect, useRef, useState } from "react";
 import StepDots from "../store/StepDots";
 import { validation } from "../../utility/extra";
-import logo from "../../assets/logo.png";
 import { authRegister } from "../../api/api";
 import { useMutation  } from "@tanstack/react-query";
+import Logo from "../../assets/logo";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -23,8 +23,8 @@ export default function SignUp() {
         }
       }, 
       onError: () => {
-        alert("Email already exist go to Signin");
-        navigate("/dashboard");
+        alert("Email already exist go to Sign in");
+        navigate("/dashboar");
       },
 
   });
@@ -135,7 +135,7 @@ export default function SignUp() {
     <div className="min-h-screen w-full flex items-center justify-center bg-primary-100">
       <div className="w-full max-w-md flex flex-col items-center gap-6 text-white p-8">
         <div className="mb-2">
-          <img src= {logo} alt="Logo" className="h-20 w-20 rounded-full object-contain bg-black mx-auto mb-6" />
+          < Logo className="h-20 w-20q"   />
         </div>
 
         <h1 className="text-3xl font-semibold">Sign up for free</h1>

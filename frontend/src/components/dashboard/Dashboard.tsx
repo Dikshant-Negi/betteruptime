@@ -5,8 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchWebsite} from "../../api/api";
 import type { Website } from "../../types/types";
 import AddMonitor from "./AddMonitor";
-import logo from '../../assets/logo.png'
 import LineGraph from "./LineGraph";
+import Logo from "../../assets/logo";
 
 export default function DashBoard() {
     const navigate = useNavigate();
@@ -39,8 +39,8 @@ export default function DashBoard() {
 
             <aside className="w-64 border-r border-border-main bg-primary-100 flex flex-col justify-between p-4 hidden md:flex">
                 <div>
-                    <div className="flex item-center gap-2 mb-8 px-2 text-white">
-                        <img src={logo} alt="logo" className="h-8 w-8 bg-brand-blue rounded-lg flex item-center justify-center font-bold text-xl text-primary-100" />
+                    <div className="mb-8 flex items-center gap-3">
+                        <Logo />
                         <span className="text-xl font-bold tracking-tight">UptimeWork</span>
                     </div>
 

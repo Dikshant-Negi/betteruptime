@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../store/Input";
 import { useEffect, useRef, useState } from "react";
-import logo from "../../assets/logo.png";
 import { authLogin } from "../../api/api";
 import { useMutation } from "@tanstack/react-query";
+import Logo from "../../assets/logo";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ export default function SignIn() {
     onError: () => {
       alert("Invalid credentials");
     },
-  });
+  })
 
   let ref = useRef<HTMLInputElement>(null);
   let [active, setIsActive] = useState<boolean>(false);
@@ -54,8 +54,8 @@ export default function SignIn() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-primary-100">
       <div className="w-full max-w-md flex flex-col items-center gap-6 text-white p-8">
-        <div className="mb-2">
-          <img src={logo} alt="Logo" className="h-20 w-20 rounded-full object-contain bg-black mx-auto mb-6" />
+        <div className="h=30 mb-2">
+          <Logo className="h-20 w-20"/>
         </div>
 
         <h1 className="text-3xl font-semibold">Welcome back</h1>
@@ -125,3 +125,4 @@ export default function SignIn() {
     </div>
   );
 }
+
