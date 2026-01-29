@@ -34,3 +34,9 @@ export interface Incident {
   end_time: string | null;
   error_reason: string;
 }
+
+export interface ReliabilityData{
+  date: string;
+  up_seconds: number;
+  down_seconds: number;
+}

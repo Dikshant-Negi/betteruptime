@@ -6,7 +6,7 @@ import { fetchWebsite} from "../../api/api";
 import type { Website } from "../../types/types";
 import AddMonitor from "./AddMonitor";
 import logo from '../../assets/logo.png'
-
+import LineGraph from "./LineGraph";
 
 export default function DashBoard() {
     const navigate = useNavigate();
@@ -182,10 +182,8 @@ function MonitorCard({ data }: { data: Website }) {
           {isUp ? "200 OK" : "500 ERR"}
         </span>
       </div>
-      <div className="h-16 flex items-end gap-1 mt-4 opacity-50">
-        {[40, 60, 45, 70, 80, 50, 60, 75, 90, 60].map((h, i) => (
-           <div key={i} style={{ height: `${h}%` }} className={`flex-1 rounded-t-sm ${isUp ? 'bg-green-500' : 'bg-red-500'}`}></div>
-        ))}
+      <div className="h-24 mt-4 w-full">
+        <LineGraph websiteId={String(data.id)} />
       </div>
       <div className="flex justify-between items-center mt-4 pt-4 border-t border-border-main text-xs text-gray-400">
         <span>Last checked: <span className="text-white font-medium">{data.last_checked_at ? new Date(data.last_checked_at).toLocaleTimeString() : "Pending"}</span></span>

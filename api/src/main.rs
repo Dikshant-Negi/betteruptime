@@ -50,6 +50,10 @@ async fn main() -> Result<(), std::io::Error> {
         .at(
             "/getwebsites",
             poem::get(website::get_websites).with(TokenMiddleware)
+        )
+        .at (
+            "/websites/:id/reliability",
+            poem::get(website::get_reliability_graph)
         );
     
     let cors = Cors::new()

@@ -1,11 +1,11 @@
-use poem::{Error, Request, handler, http::StatusCode, web::{Data, Json}};
+use poem::{Error, Request, handler, http::StatusCode, web::{Data, Json, Path}};
 use crate::extra::website_response::{WebsiteInput,WebsiteOutput};
 use crate::extra::app_state::AppState;
 use crate::extra::auth_middleware::Token;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use redis_stream::redis_client::RedisStream;
-use store::models::website::Website;
+use store::models::website::{ Website, DailyReliabilityStat};
 
 #[handler]
 pub async fn create_website(Json(body):Json<WebsiteInput>,data:Data<&Arc<Mutex<AppState>>>,req:&Request)->Result<Json<WebsiteOutput>,Error>{
@@ -63,4 +63,14 @@ pub async fn get_websites(
         .map_err(|e| poem::Error::from_string(e.to_string(), StatusCode::INTERNAL_SERVER_ERROR))?;
 
     Ok(Json(websites))
+}
+#[handler]
+pub async fn get_reliability_graph(Path(id): Path<String>, data: Data<&Arc<Mutex<AppState>>>) -> poem::Result<Json<Vec<DailyReliabilityStat>>> {
+    let state = data.lock().await;
+    let store = state.db.lock().await;
+    let stats = store.get_daily_reliability(&id)
+        .await
+        .map_err(|e| poem::Error::from_string(e.to_string(), StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    Ok(Json(stats))
 }

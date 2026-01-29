@@ -14,7 +14,7 @@ pub struct PingResult {
     pub website_id: String,
     pub url: String,
     pub user_id: String,
-    pub is_up: bool,        
+    pub is_up: bool,      
     pub latency_ms: u64,    
     pub error_msg: Option<String>,
 }
@@ -136,12 +136,17 @@ pub async fn process_jobs() -> RedisResult<()> {
 
         //Process Results
         while let Some(ping) = futures.next().await {
+
+            let status_key = format!("betteruptime::status:{}", ping.website_id);
+            let last_redis_status: String = client.conn.get(&status_key).unwrap_or("UP".to_string());
+
             
             let analytics_data = analytics::CheckResult {
                 website_id: ping.website_id.clone(),
                 is_up: ping.is_up,
                 response_time_ms: ping.latency_ms,
                 error_msg: ping.error_msg.clone(),
+                previous_status: last_redis_status.clone(),
             };
             
             if let Err(e) = analytics::process_check_result(&store, analytics_data).await {
@@ -149,9 +154,6 @@ pub async fn process_jobs() -> RedisResult<()> {
             }
 
             //CHECK STATUS & ALERT
-            let status_key = format!("betteruptime:status:{}", ping.website_id);
-            let last_redis_status: String = client.conn.get(&status_key).unwrap_or("UP".to_string());
-
             if ping.is_up {
                 // Currently UP
                 println!("Checked {}: UP ({}ms)", ping.url, ping.latency_ms);
