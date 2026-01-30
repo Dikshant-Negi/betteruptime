@@ -4,12 +4,6 @@ export interface AuthResponse {
   jwt: string;
 }
 
-export interface CreateWebsitePayload {
-  name: string;
-  url: string;
-  check_interval: number;
-}
-
 export interface WebsiteStats {
   total_uptime_seconds: number;
   total_downtime_seconds: number;

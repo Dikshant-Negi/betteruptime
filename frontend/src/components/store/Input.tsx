@@ -1,5 +1,4 @@
-import type { Component } from "lucide-react";
-import React, { forwardRef, type JSX } from "react";
+import React, { forwardRef } from "react";
 
 type InputProps = {
   label: string;

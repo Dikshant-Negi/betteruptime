@@ -2,6 +2,7 @@ import axios from 'axios';
 import type {
     AuthResponse, Website, ReliabilityData
 } from '../types/types';
+
 const API_BASE_URL = 'http://localhost:3000';
 
 export const api = axios.create({
