@@ -6,7 +6,7 @@ import { fetchWebsite} from "../../api/api";
 import type { Website } from "../../types/types";
 import AddMonitor from "./AddMonitor";
 import LineGraph from "./LineGraph";
-import Logo from "../../assets/logo";
+import Logo from "../../assets/Logo";
 
 export default function DashBoard() {
     const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function DashBoard() {
 
     const handleLogout = () => {
         localStorage.removeItem("token");
-        navigate("/signin");
+        navigate("/");
     }
     
     return (

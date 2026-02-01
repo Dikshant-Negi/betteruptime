@@ -9,6 +9,7 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({children}) =>{
     const token = localStorage.getItem("token");
 
     if(!token) {
+        alert("You are not loged in. Please login to see your monitors.")
         return <Navigate to="/signin" replace />
     }
 

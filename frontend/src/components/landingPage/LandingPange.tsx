@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import Logo from "../../assets/logo";
+import Logo from "../../assets/Logo";
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen w-full bg-primary-100 text-white flex flex-col font-sans">
+        <div className="min-h-screen w-full bg-primary-100 text-white  font-sans">
             <nav className="flex items-center justify-between px-6 py-6 max-w-7xl mx-auto w-full">
                 <div className="h-10 w-10 flex items-center gap-1">
                     <Logo />
@@ -35,10 +35,10 @@ export default function LandingPage() {
                 </h1>
 
                 <p className="text-lg text-gray-400 max-w-2xl mb-10 leading-relaxed">
-                    Get instant Downtime alerts, view daily historical uptime graphs, and manage all yout monitor int one dashboard.
+                    Get instant Downtime alerts, view daily historical uptime graphs, and manage all yout monitor in one dashboard.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mb-20">
-                    <Link to="singup" className="px-8 py-4 rounded-xl bg-brand-blue font-bold text-primary-100 hover:opacity-90 transition shadow-brand-blue/20">
+                    <Link to="/signup" className="px-8 py-4 rounded-xl bg-brand-blue font-bold text-primary-100 hover:opacity-90 transition shadow-brand-blue/20">
                         Start Monitoring Your Websites for Free
                     </Link>
                 </div>

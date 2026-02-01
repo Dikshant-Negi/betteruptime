@@ -5,7 +5,7 @@ import StepDots from "../store/StepDots";
 import { validation } from "../../utility/extra";
 import { authRegister } from "../../api/api";
 import { useMutation  } from "@tanstack/react-query";
-import Logo from "../../assets/logo";
+import Logo from "../../assets/Logo";
 
 export default function SignUp() {
   const navigate = useNavigate();

@@ -6,7 +6,7 @@ export default function Logo({
   className = "h-8 w-8",
 }: LogoProps) {
   return (
-    <div className="flex items-center gap-2 text-white">
+    <div className="flex items-center gap-2 text-white rounded-full bg-card-header">
       <svg
         className={className}
         viewBox="0 0 100 100"

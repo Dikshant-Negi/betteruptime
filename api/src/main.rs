@@ -38,6 +38,7 @@ async fn main() -> Result<(), std::io::Error> {
             panic!("Failed to connect to redis: {}", e);
         }
     };
+    
     let state = Arc::new(Mutex::new(AppState { db, redis }));
 
     let api = Route::new()

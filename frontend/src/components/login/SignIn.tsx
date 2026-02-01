@@ -3,7 +3,7 @@ import Input from "../store/Input";
 import { useEffect, useRef, useState } from "react";
 import { authLogin } from "../../api/api";
 import { useMutation } from "@tanstack/react-query";
-import Logo from "../../assets/logo";
+import Logo from "../../assets/Logo";
 
 export default function SignIn() {
   const navigate = useNavigate();
