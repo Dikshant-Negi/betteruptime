@@ -1,5 +1,6 @@
+use chrono::Timelike;
 use store::Store;
-use chrono::{Utc, Timelike};
+
 
 pub struct CheckResult {
     pub website_id : String,

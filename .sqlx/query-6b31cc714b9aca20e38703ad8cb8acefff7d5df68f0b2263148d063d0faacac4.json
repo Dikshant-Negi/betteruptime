@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE website_stats SET\n                total_uptime_seconds = total_uptime_seconds + CASE WHEN current_status ='UP' THEN EXTRACT(EPOCH FROM (NOW() - last_status_change))::BIGINT ELSE 0 END,\n                total_downtime_seconds = total_downtime_seconds + CASE WHEN current_status ='DOWN' THEN EXTRACT(EPOCH FROM (NOW() - last_status_change))::BIGINT ELSE 0 END,\n\n                last_status_change = NOW(),\n                current_status = $2::text::website_status\n            WHERE website_id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b31cc714b9aca20e38703ad8cb8acefff7d5df68f0b2263148d063d0faacac4"
+}

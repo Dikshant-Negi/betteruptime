@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://myuser:mypassword@postgres:5432/mydb
+      REDIS_URL: redis://redis:6379
+
+
+  consumer:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    command: ["/usr/local/bin/consumer"]
+    depends_on:
+      - postgres
+      - redis
+
+  publisher:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    command: ["/usr/local/bin/publisher"]
+    depends_on:
+      - postgres
+      - redis
+
+  notifier:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    command: ["/usr/local/bin/notifier"]
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  pgdata:

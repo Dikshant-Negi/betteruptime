@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE websites SET last_checked_at = NOW(), status = $1::text::website_status WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2780f701d6f2b93393aeee2aa0d0ee4f37519f10655b48ea7623fd9c9c183fc1"
+}

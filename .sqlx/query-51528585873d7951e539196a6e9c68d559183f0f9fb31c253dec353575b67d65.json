@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO daily_reliability (website_id, date, up_seconds, down_seconds)\n            VALUES ($1, $2, $3, $4)\n            ON CONFLICT (website_id, date) \n            DO UPDATE SET \n                up_seconds = daily_reliability.up_seconds + $3,\n                down_seconds = daily_reliability.down_seconds + $4\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Date",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "51528585873d7951e539196a6e9c68d559183f0f9fb31c253dec353575b67d65"
+}

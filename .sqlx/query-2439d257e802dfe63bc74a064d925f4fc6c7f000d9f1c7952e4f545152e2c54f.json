@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE website_stats\n        SET \n            total_uptime_seconds = total_uptime_seconds + $2,\n            total_downtime_seconds = total_downtime_seconds + $3\n        WHERE website_id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2439d257e802dfe63bc74a064d925f4fc6c7f000d9f1c7952e4f545152e2c54f"
+}
