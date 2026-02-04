@@ -39,14 +39,6 @@ impl Store {
         .fetch_one(&self.conn)
         .await?;
         
-        sqlx::query!(
-            "INSERT INTO website_stats (website_id, current_status, last_status_change, total_uptime_seconds, total_downtime_seconds) 
-             VALUES ($1, 'UP'::text::website_status, NOW(), 0, 0)",
-            id
-        )
-        .execute(&self.conn)
-        .await?;
-
         Ok(Output {
             id: res.id,
             url: res.url,

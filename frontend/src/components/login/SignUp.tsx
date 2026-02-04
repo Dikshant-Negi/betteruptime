@@ -24,7 +24,7 @@ export default function SignUp() {
       }, 
       onError: () => {
         alert("Email already exist go to Sign in");
-        navigate("/dashboar");
+        navigate("/signin");
       },
 
   });

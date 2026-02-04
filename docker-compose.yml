@@ -1,65 +1,84 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:15
-    restart: always
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: mydb
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   redis:
     image: redis:7
-    restart: always
-    ports:
-      - "6379:6379"
+
+  migrate:
+    image: rust:latest
+    working_dir: /app
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    command: >
+      bash -c "
+        cargo install sqlx-cli --no-default-features --features postgres &&
+        cargo sqlx migrate run
+      "
+    restart: "no"
 
   api:
     build:
       context: .
       dockerfile: api/Dockerfile
-    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
     depends_on:
       - postgres
       - redis
-    ports:
-      - "8080:8080"
-    environment:
-      DATABASE_URL: postgres://myuser:mypassword@postgres:5432/mydb
-      REDIS_URL: redis://redis:6379
-
+      - migrate
 
   consumer:
     build:
       context: .
       dockerfile: worker/Dockerfile
     command: ["/usr/local/bin/consumer"]
+    env_file:
+      - .env
     depends_on:
-      - postgres
-      - redis
+      - api
 
   publisher:
     build:
       context: .
       dockerfile: worker/Dockerfile
     command: ["/usr/local/bin/publisher"]
+    env_file:
+      - .env
     depends_on:
-      - postgres
-      - redis
+      - api
 
   notifier:
     build:
       context: .
       dockerfile: worker/Dockerfile
     command: ["/usr/local/bin/notifier"]
+    env_file:
+      - .env
     depends_on:
-      - postgres
-      - redis
+      - api
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:80"
+    env_file:
+      - .env
+    depends_on:
+      - api
 
 volumes:
   pgdata:
