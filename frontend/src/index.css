@@ -2,13 +2,13 @@
 @tailwind utilities;
 
 body {
-    min-height: 100vh;
-    width: 100vw;
+    height: 100%;
+    width: 100%;
     margin: 0;
-    display: flex;
-    justify-content: center;
-    background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
+    background: #0A0E1A;
     font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    
 }
 
 @theme{
@@ -18,4 +18,24 @@ body {
     --color-card-header: #1e293b;
     --color-border-main: #334155;
     --color-brand-blue: #60a5fa;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 100% 100%;
+  animation: gradientMove 6s ease infinite;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
