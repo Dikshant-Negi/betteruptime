@@ -41,7 +41,7 @@ export default function DashBoard() {
                 <div>
                     <div className="mb-8 flex items-center gap-3">
                         <Logo />
-                        <span className="text-xl font-bold tracking-tight">UptimeWork</span>
+                        <span className="text-xl font-bold tracking-tight">SkyWatch</span>
                     </div>
 
                     <nav className="space-y-2">

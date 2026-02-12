@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Activity, Shield, Zap, Globe } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 const stats = [
   { value: "99.99%", label: "Uptime" },
@@ -32,6 +33,21 @@ const features = [
 ];
 
 export default function App() {
+  const navigate = useNavigate();
+
+  const handleMonitoring = () => {
+    const token = localStorage.getItem('token');
+
+    if(token){
+      navigate('/dashboard');
+    }else {
+      navigate('/signup');
+    }
+    const handleSignup = () => {
+      navigate("/signup");
+    }
+
+  } 
   return (
     <div className="bg-[#0b0f19] h-svh  text-white  font-sans overflow-x-hidden">
 
@@ -41,9 +57,16 @@ export default function App() {
       {/* Navbar */}
       <nav className="flex justify-between items-center px-6 md:px-12 py-6">
         <h1 className="text-xl font-bold tracking-wide">SkyWatch</h1>
-        <button className="px-5 py-2 bg-white text-black rounded-full font-medium hover:scale-105 transition">
-          Get Started
-        </button>
+        <div className="flex items-center gap-4 mt-2">
+            <Link to="/signin" className="text-sm font-medium text-gray-400 hover:text-white transition">
+              Sign in
+            </Link>
+            <Link to="/signup" className="px-4 py-2 text-sm font-bold bg-white text-primary-100 rounded-lg hover:bg-gray-200 transition">
+              Get Started
+            </Link>
+        </div>
+        
+        
       </nav>
 
       {/* HERO */}
@@ -62,10 +85,10 @@ export default function App() {
         </p>
 
         <div className="mt-8 flex justify-center gap-4">
-          <button className="px-6 py-3 bg-blue-500 rounded-lg font-medium hover:bg-blue-600 transition">
+          <button className="px-6 py-3 bg-blue-500 rounded-lg font-medium hover:bg-blue-600 transition" onClick={handleMonitoring}>
             Start Monitoring
           </button>
-          <button className="px-6 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition">
+          <button className="px-6 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition" onClick={() => navigate('/demo')}>
             Live Demo
           </button>
         </div>
@@ -114,10 +137,10 @@ export default function App() {
       <section className="relative text-center px-6 pb-32">
         <div className="absolute -inset-20 bg-linear-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-3xl -z-10" />
         <h2 className="text-4xl font-bold">Ready to stay online?</h2>
-        <p className="text-gray-400 mt-4">Start monitoring your infrastructure in under 60 seconds.</p>
-        <button className="mt-8 px-8 py-4 bg-white text-black font-semibold rounded-xl hover:scale-105 transition">
+        <p className="text-gray-400 mt-4 mb-10">Start monitoring your infrastructure in under 60 seconds.</p>
+        <Link to="/signup" className="mt-8 px-8 py-4 bg-white text-black font-semibold rounded-xl hover:scale-105 transition">
           Create Free Account
-        </button>
+        </Link>
       </section>
 
       {/* FOOTER */}

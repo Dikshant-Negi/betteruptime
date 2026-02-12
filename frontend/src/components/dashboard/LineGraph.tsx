@@ -18,22 +18,35 @@ const formatCustomDuration = (seconds: number) => {
   return `${m}m`;
 };
 
-export default function LineGraph({ websiteId }: { websiteId: string }) {
-  const { data, isLoading } = useQuery({
+// Update Props Interface
+interface LineGraphProps {
+  websiteId?: string;       // Optional kar diya
+  staticData?: any[];       // New prop for Demo data
+}
+
+export default function LineGraph({ websiteId, staticData }: LineGraphProps) {
+  
+  // 1. API Call (Condition: Sirf tab chalega jab staticData NAHI hoga aur websiteId HOGA)
+  const { data: apiData, isLoading } = useQuery({
     queryKey: ["reliability", websiteId],
-    queryFn: () => fetchReliability(websiteId),
+    queryFn: () => fetchReliability(websiteId!), 
+    enabled: !!websiteId && !staticData, // <-- YE MAIN LOGIC HAI (Stop API if static data exists)
     refetchInterval: 60000,
     select: (data) => [...data].reverse(),
   });
 
-  if (isLoading)
+  // 2. Decide karo kaunsa data use karna hai
+  const finalData = staticData || apiData;
+  const loading = !staticData && isLoading;
+
+  if (loading)
     return (
       <div className="h-full w-full flex items-end pb-2">
         <div className="w-full h-1/2 bg-gray-700/20 animate-pulse rounded"></div>
       </div>
     );
 
-  if (!data || data.length === 0)
+  if (!finalData || finalData.length === 0)
     return (
       <div className="text-xs text-gray-600 mt-8 text-center">
         No data available.
@@ -43,7 +56,7 @@ export default function LineGraph({ websiteId }: { websiteId: string }) {
   return (
     <div className="w-full h-full" style={{ minHeight: "100px" }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
+        <LineChart data={finalData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} vertical={false} />
           
           <XAxis dataKey="date" hide />
@@ -64,7 +77,7 @@ export default function LineGraph({ websiteId }: { websiteId: string }) {
             }}
             formatter={(value: any, name: any) => [
               formatCustomDuration(Number(value)),
-              name
+              name === "up_seconds" ? "Uptime" : "Downtime"
             ]}
           />
 
@@ -77,7 +90,6 @@ export default function LineGraph({ websiteId }: { websiteId: string }) {
             activeDot={{ r: 4, fill: "#22c55e" }}
             name="Uptime"
           />
-
           
           <Line
             type="monotone"
